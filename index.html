@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catálogo Ecuestre</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f3ec;
+      --surface: #ffffff;
+      --ink: #2b211a;
+      --muted: #7a6a5c;
+      --line: #e6dccf;
+      --accent: #7b4a2a;
+      --accent-ink: #ffffff;
+      --chip: #efe6da;
+      --shadow: 0 1px 2px rgba(43, 33, 26, .06), 0 4px 16px rgba(43, 33, 26, .06);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1b1612;
+        --surface: #26201b;
+        --ink: #f1e9df;
+        --muted: #b3a493;
+        --line: #3a312a;
+        --accent: #c98a5b;
+        --accent-ink: #1b1612;
+        --chip: #322a23;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: Inter, system-ui, sans-serif;
+      line-height: 1.5;
+    }
+
+    /* ---------- Cabecera fija ---------- */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+    .brand {
+      font-family: "Playfair Display", serif;
+      font-size: 1.5rem;
+      margin: 0;
+      padding: 14px 0 10px;
+    }
+
+    .tabs { display: flex; gap: 8px; }
+    .tab {
+      flex: 1;
+      max-width: 260px;
+      padding: 10px 14px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface);
+      color: var(--ink);
+      font: 600 1rem Inter, sans-serif;
+      cursor: pointer;
+    }
+    .tab[aria-selected="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--accent-ink);
+    }
+
+    .chips {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 12px 0;
+      scrollbar-width: none;
+    }
+    .chips::-webkit-scrollbar { display: none; }
+    .chip {
+      flex: none;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--ink);
+      text-decoration: none;
+      font-size: .92rem;
+      font-weight: 500;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .chip.active { border-color: var(--accent); color: var(--accent); }
+    .chip .count { color: var(--muted); font-weight: 400; margin-left: 4px; }
+
+    /* ---------- Secciones ---------- */
+    main { padding: 8px 0 64px; }
+    .categoria[hidden] { display: none; }
+    section.sub { padding-top: 28px; scroll-margin-top: 150px; }
+    section.sub h2 {
+      font-family: "Playfair Display", serif;
+      font-size: 1.4rem;
+      margin: 0 0 14px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    section.sub h2 small { font: 400 .85rem Inter, sans-serif; color: var(--muted); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+    .card button.foto {
+      all: unset;
+      cursor: zoom-in;
+      display: block;
+      aspect-ratio: 1;
+      background: var(--chip);
+    }
+    .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card .info { padding: 10px 12px 12px; }
+    .card .nombre { font-weight: 600; margin: 0; }
+    .card .detalle { color: var(--muted); font-size: .88rem; margin: 2px 0 0; }
+    .card .precio { color: var(--accent); font-weight: 600; margin: 6px 0 0; }
+
+    .vacio {
+      border: 1.5px dashed var(--line);
+      border-radius: 12px;
+      padding: 28px 16px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .arriba {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: var(--accent);
+      color: var(--accent-ink);
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .arriba.visible { opacity: 1; pointer-events: auto; }
+
+    /* ---------- Visor de fotos ---------- */
+    dialog {
+      border: none;
+      padding: 0;
+      background: transparent;
+      max-width: min(92vw, 900px);
+    }
+    dialog::backdrop { background: rgba(0, 0, 0, .85); }
+    dialog img { max-width: 100%; max-height: 80vh; display: block; border-radius: 8px; }
+    dialog p { color: #fff; text-align: center; margin: 10px 0 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1 class="brand">Catálogo Ecuestre</h1>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <nav class="chips" id="chips" aria-label="Subsecciones"></nav>
+    </div>
+  </header>
+
+  <main class="wrap" id="contenido"></main>
+
+  <button class="arriba" id="arriba" aria-label="Volver arriba">↑</button>
+
+  <dialog id="visor">
+    <img alt="">
+    <p></p>
+  </dialog>
+
+  <script src="productos.js"></script>
+  <script>
+    const tabsEl = document.getElementById("tabs");
+    const chipsEl = document.getElementById("chips");
+    const mainEl = document.getElementById("contenido");
+    const visor = document.getElementById("visor");
+
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+    // ----- Armar el contenido -----
+    CATALOGO.forEach((cat) => {
+      const tab = document.createElement("button");
+      tab.className = "tab";
+      tab.role = "tab";
+      tab.textContent = cat.titulo;
+      tab.dataset.cat = cat.id;
+      tab.onclick = () => mostrarCategoria(cat.id, true);
+      tabsEl.appendChild(tab);
+
+      const div = document.createElement("div");
+      div.className = "categoria";
+      div.dataset.cat = cat.id;
+      div.innerHTML = cat.secciones.map((sec) => {
+        const carpeta = `fotos/${cat.id}/${sec.id}/`;
+        const items = sec.productos.length
+          ? `<div class="grid">${sec.productos.map((p) => `
+              <article class="card">
+                ${p.foto ? `<button class="foto" data-src="${esc(carpeta + p.foto)}" data-nombre="${esc(p.nombre)}">
+                  <img src="${esc(carpeta + p.foto)}" alt="${esc(p.nombre)}" loading="lazy">
+                </button>` : ""}
+                <div class="info">
+                  <p class="nombre">${esc(p.nombre)}</p>
+                  ${p.detalle ? `<p class="detalle">${esc(p.detalle)}</p>` : ""}
+                  ${p.precio ? `<p class="precio">${esc(p.precio)}</p>` : ""}
+                </div>
+              </article>`).join("")}</div>`
+          : `<div class="vacio">Próximamente</div>`;
+        return `<section class="sub" id="${cat.id}-${sec.id}">
+            <h2>${esc(sec.titulo)} <small>${sec.productos.length || ""}</small></h2>
+            ${items}
+          </section>`;
+      }).join("");
+      mainEl.appendChild(div);
+    });
+
+    // ----- Cambiar de categoría -----
+    let catActual = null;
+    function mostrarCategoria(id, irArriba) {
+      catActual = CATALOGO.find((c) => c.id === id) || CATALOGO[0];
+      document.querySelectorAll(".tab").forEach((t) =>
+        t.setAttribute("aria-selected", t.dataset.cat === catActual.id));
+      document.querySelectorAll(".categoria").forEach((d) =>
+        d.hidden = d.dataset.cat !== catActual.id);
+      chipsEl.innerHTML = catActual.secciones.map((s) =>
+        `<a class="chip" href="#${catActual.id}-${s.id}">${esc(s.titulo)}${
+          s.productos.length ? `<span class="count">${s.productos.length}</span>` : ""}</a>`).join("");
+      if (irArriba) {
+        history.replaceState(null, "", "#" + catActual.id);
+        window.scrollTo({ top: 0 });
+      }
+      marcarChip();
+    }
+
+    // ----- Resaltar la subsección visible -----
+    function marcarChip() {
+      const secciones = [...document.querySelectorAll(`.categoria[data-cat="${catActual.id}"] section.sub`)];
+      const limite = document.querySelector("header").offsetHeight + 20;
+      let actual = secciones[0];
+      secciones.forEach((s) => { if (s.getBoundingClientRect().top <= limite) actual = s; });
+      // Al final de la página las últimas secciones no llegan arriba: respetar la elegida
+      const alFinal = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+      const elegida = document.getElementById(location.hash.slice(1));
+      if (alFinal && elegida && secciones.includes(elegida) &&
+          elegida.getBoundingClientRect().top < window.innerHeight) actual = elegida;
+      chipsEl.querySelectorAll(".chip").forEach((c) => {
+        const on = c.getAttribute("href") === "#" + actual.id;
+        c.classList.toggle("active", on);
+        if (on) c.scrollIntoView({ block: "nearest", inline: "nearest" });
+      });
+      document.getElementById("arriba").classList.toggle("visible", window.scrollY > 400);
+    }
+    window.addEventListener("scroll", marcarChip, { passive: true });
+    document.getElementById("arriba").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // ----- Abrir desde un link (#caballo-mandiles) -----
+    function desdeHash() {
+      const hash = location.hash.slice(1);
+      const cat = CATALOGO.find((c) => hash === c.id || hash.startsWith(c.id + "-"));
+      mostrarCategoria(cat ? cat.id : CATALOGO[0].id, false);
+      if (hash.includes("-")) document.getElementById(hash)?.scrollIntoView();
+    }
+    window.addEventListener("hashchange", desdeHash);
+    desdeHash();
+
+    // ----- Visor de fotos -----
+    mainEl.addEventListener("click", (e) => {
+      const b = e.target.closest("button.foto");
+      if (!b) return;
+      visor.querySelector("img").src = b.dataset.src;
+      visor.querySelector("img").alt = b.dataset.nombre;
+      visor.querySelector("p").textContent = b.dataset.nombre;
+      visor.showModal();
+    });
+    visor.addEventListener("click", () => visor.close());
+  </script>
+</body>
+</html>
