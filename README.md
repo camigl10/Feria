@@ -20,6 +20,8 @@ Abrí `index.html` en el navegador para ver el catálogo.
 
    `precio` y `detalle` son opcionales.
 
-## Links directos
+## Navegación
 
-Cada sección tiene su propio link, por ejemplo `index.html#caballo-mandiles` o `index.html#jinete-guantes`.
+En cada categoría, el botón **Ver todo** muestra todas sus subdivisiones juntas y los demás botones muestran una sola.
+
+Cada vista tiene su propio link: `index.html#caballo` (ver todo Caballo), `index.html#caballo-mandiles`, `index.html#jinete-guantes`, etc.

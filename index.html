@@ -91,9 +91,8 @@
       border-radius: 999px;
       background: var(--chip);
       color: var(--ink);
-      text-decoration: none;
-      font-size: .92rem;
-      font-weight: 500;
+      font: 500 .92rem Inter, sans-serif;
+      cursor: pointer;
       white-space: nowrap;
       border: 1px solid transparent;
     }
@@ -103,7 +102,8 @@
     /* ---------- Secciones ---------- */
     main { padding: 8px 0 64px; }
     .categoria[hidden] { display: none; }
-    section.sub { padding-top: 28px; scroll-margin-top: 150px; }
+    section.sub { padding-top: 28px; }
+    section.sub[hidden] { display: none; }
     section.sub h2 {
       font-family: "Playfair Display", serif;
       font-size: 1.4rem;
@@ -219,7 +219,6 @@
       tab.role = "tab";
       tab.textContent = cat.titulo;
       tab.dataset.cat = cat.id;
-      tab.onclick = () => mostrarCategoria(cat.id, true);
       tabsEl.appendChild(tab);
 
       const div = document.createElement("div");
@@ -240,7 +239,7 @@
                 </div>
               </article>`).join("")}</div>`
           : `<div class="vacio">Próximamente</div>`;
-        return `<section class="sub" id="${cat.id}-${sec.id}">
+        return `<section class="sub" data-sub="${sec.id}">
             <h2>${esc(sec.titulo)} <small>${sec.productos.length || ""}</small></h2>
             ${items}
           </section>`;
@@ -248,51 +247,50 @@
       mainEl.appendChild(div);
     });
 
-    // ----- Cambiar de categoría -----
-    let catActual = null;
-    function mostrarCategoria(id, irArriba) {
-      catActual = CATALOGO.find((c) => c.id === id) || CATALOGO[0];
+    // ----- Mostrar una categoría: todas sus subdivisiones ("Ver todo") o una sola -----
+    function mostrar(catId, subId) {
+      const cat = CATALOGO.find((c) => c.id === catId) || CATALOGO[0];
+      const sub = cat.secciones.find((s) => s.id === subId);
       document.querySelectorAll(".tab").forEach((t) =>
-        t.setAttribute("aria-selected", t.dataset.cat === catActual.id));
+        t.setAttribute("aria-selected", t.dataset.cat === cat.id));
       document.querySelectorAll(".categoria").forEach((d) =>
-        d.hidden = d.dataset.cat !== catActual.id);
-      chipsEl.innerHTML = catActual.secciones.map((s) =>
-        `<a class="chip" href="#${catActual.id}-${s.id}">${esc(s.titulo)}${
-          s.productos.length ? `<span class="count">${s.productos.length}</span>` : ""}</a>`).join("");
-      if (irArriba) {
-        history.replaceState(null, "", "#" + catActual.id);
-        window.scrollTo({ top: 0 });
-      }
-      marcarChip();
+        d.hidden = d.dataset.cat !== cat.id);
+      document.querySelectorAll(`.categoria[data-cat="${cat.id}"] section.sub`).forEach((s) =>
+        s.hidden = !!sub && s.dataset.sub !== sub.id);
+
+      const total = cat.secciones.reduce((n, s) => n + s.productos.length, 0);
+      const chip = (id, titulo, n) =>
+        `<button class="chip${(sub ? sub.id : "") === id ? " active" : ""}" data-sub="${id}">${esc(titulo)}${
+          n ? `<span class="count">${n}</span>` : ""}</button>`;
+      chipsEl.innerHTML = chip("", "Ver todo", total) +
+        cat.secciones.map((s) => chip(s.id, s.titulo, s.productos.length)).join("");
+      chipsEl.dataset.cat = cat.id;
+      chipsEl.querySelector(".active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+
+      history.replaceState(null, "", "#" + cat.id + (sub ? "-" + sub.id : ""));
+      window.scrollTo({ top: 0 });
     }
 
-    // ----- Resaltar la subsección visible -----
-    function marcarChip() {
-      const secciones = [...document.querySelectorAll(`.categoria[data-cat="${catActual.id}"] section.sub`)];
-      const limite = document.querySelector("header").offsetHeight + 20;
-      let actual = secciones[0];
-      secciones.forEach((s) => { if (s.getBoundingClientRect().top <= limite) actual = s; });
-      // Al final de la página las últimas secciones no llegan arriba: respetar la elegida
-      const alFinal = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-      const elegida = document.getElementById(location.hash.slice(1));
-      if (alFinal && elegida && secciones.includes(elegida) &&
-          elegida.getBoundingClientRect().top < window.innerHeight) actual = elegida;
-      chipsEl.querySelectorAll(".chip").forEach((c) => {
-        const on = c.getAttribute("href") === "#" + actual.id;
-        c.classList.toggle("active", on);
-        if (on) c.scrollIntoView({ block: "nearest", inline: "nearest" });
-      });
-      document.getElementById("arriba").classList.toggle("visible", window.scrollY > 400);
-    }
-    window.addEventListener("scroll", marcarChip, { passive: true });
-    document.getElementById("arriba").onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+    tabsEl.addEventListener("click", (e) => {
+      const t = e.target.closest(".tab");
+      if (t) mostrar(t.dataset.cat);
+    });
+    chipsEl.addEventListener("click", (e) => {
+      const c = e.target.closest(".chip");
+      if (c) mostrar(chipsEl.dataset.cat, c.dataset.sub);
+    });
 
-    // ----- Abrir desde un link (#caballo-mandiles) -----
+    // ----- Botón volver arriba -----
+    const arriba = document.getElementById("arriba");
+    window.addEventListener("scroll", () =>
+      arriba.classList.toggle("visible", window.scrollY > 400), { passive: true });
+    arriba.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // ----- Abrir desde un link (#caballo = ver todo, #caballo-mandiles = una subdivisión) -----
     function desdeHash() {
       const hash = location.hash.slice(1);
-      const cat = CATALOGO.find((c) => hash === c.id || hash.startsWith(c.id + "-"));
-      mostrarCategoria(cat ? cat.id : CATALOGO[0].id, false);
-      if (hash.includes("-")) document.getElementById(hash)?.scrollIntoView();
+      const cat = CATALOGO.find((c) => hash === c.id || hash.startsWith(c.id + "-")) || CATALOGO[0];
+      mostrar(cat.id, hash.slice(cat.id.length + 1));
     }
     window.addEventListener("hashchange", desdeHash);
     desdeHash();
