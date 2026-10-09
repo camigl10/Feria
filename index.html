@@ -255,16 +255,17 @@
     armar();
 
     // ----- Fotos subidas a las carpetas: se agregan solas, sin tocar código -----
-    // El nombre del archivo es el nombre del producto. Si tiene " - ", lo que sigue es el precio:
-    //   "Mandil azul - $25.000.jpg"  ->  Mandil azul / $25.000
+    // El nombre del archivo se separa con " - ": primero el nombre, después el precio (lo que
+    // empieza con "$") y el talle u otro detalle, en cualquier orden:
+    //   "Pantalón - Talle 38 - $40.000.jpg"  ->  Pantalón / Talle 38 / $40.000
     // Los nombres automáticos de cámara/celular ("IMG_1234", "WhatsApp Image ...") no se muestran.
     function productoDesdeArchivo(archivo) {
-      const base = archivo.replace(/\.[^.]+$/, "").trim();
-      const i = base.lastIndexOf(" - ");
-      let nombre = i > 0 ? base.slice(0, i).trim() : base;
-      const precio = i > 0 ? base.slice(i + 3).trim() : "";
+      const partes = archivo.replace(/\.[^.]+$/, "").split(" - ").map((x) => x.trim()).filter(Boolean);
+      let nombre = partes.shift() || "";
+      const precio = partes.filter((x) => x.startsWith("$")).join(" ");
+      const detalle = partes.filter((x) => !x.startsWith("$")).join(" · ");
       if (/^(img|dsc|dscn|pxl|image|photo|whatsapp image)([\s_-]|\d|$)/i.test(nombre)) nombre = "";
-      return { nombre, precio, foto: archivo };
+      return { nombre, precio, detalle, foto: archivo };
     }
 
     async function cargarFotos() {

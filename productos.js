@@ -5,9 +5,9 @@
  *  FORMA FÁCIL (sin tocar este archivo):
  *   Subí la foto a la carpeta que corresponda dentro de "fotos/"
  *   (por ejemplo fotos/caballo/mandiles/) y aparece sola en el catálogo.
- *   El nombre del archivo es el nombre del producto; si ponés " - ",
- *   lo que sigue es el precio:
- *        Mandil azul - $25.000.jpg
+ *   El nombre del archivo se separa con " - ": nombre, talle y precio
+ *   (el precio empieza con "$"):
+ *        Pantalón - Talle 38 - $40.000.jpg
  *
  *  FORMA AVANZADA (opcional): agregar una línea en la sección, por ej.
  *        { nombre: "Mandil azul", precio: "$25.000", detalle: "Talle full", foto: "mandil-azul.jpg" },

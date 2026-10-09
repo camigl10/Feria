@@ -13,10 +13,11 @@ Abrí `index.html` en el navegador para ver el catálogo.
 2. Tocá **Add file → Upload files**, elegí las fotos y tocá **Commit changes**.
 3. En 1 o 2 minutos aparecen solas en el catálogo.
 
-El nombre del archivo es el nombre del producto. Si ponés ` - `, lo que sigue es el precio:
+El nombre del archivo se separa con ` - ` (guion con un espacio de cada lado): primero el nombre del producto y después, en cualquier orden, el precio (empieza con `$`) y el talle:
 
+- `Pantalón - Talle 38 - $40.000.jpg` → **Pantalón**, Talle 38, $40.000
 - `Mandil azul - $25.000.jpg` → **Mandil azul**, $25.000
-- `Mandil azul.jpg` → **Mandil azul**, sin precio
+- `Guantes - Talles S M L.jpg` → **Guantes**, Talles S M L
 - `IMG_1234.jpg` → solo la foto, sin nombre
 
 Formatos: JPG, PNG o WEBP.
