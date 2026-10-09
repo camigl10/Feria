@@ -5,7 +5,7 @@ Abrí `index.html` en el navegador para ver el catálogo.
 ## Secciones
 
 - **Caballo**: mandiles, bozal, cueros, mantas, embocaduras, protectores
-- **Jinete / Amazona**: pantalón, remera concurso, remera entrenamiento, accesorios, chaleco, guantes, polainas
+- **Amazona**: pantalón, remera concurso, remera entrenamiento, sacos de concurso, accesorios, chaleco, guantes, polainas
 
 ## Cómo agregar productos (sin tocar código)
 
@@ -38,4 +38,4 @@ Formatos: JPG, PNG o WEBP.
 
 En cada categoría, el botón **Ver todo** muestra todas sus subdivisiones juntas y los demás botones muestran una sola.
 
-Cada vista tiene su propio link: `index.html#caballo` (ver todo Caballo), `index.html#caballo-mandiles`, `index.html#jinete-guantes`, etc.
+Cada vista tiene su propio link: `index.html#caballo` (ver todo Caballo), `index.html#caballo-mandiles`, `index.html#amazona-guantes`, etc.

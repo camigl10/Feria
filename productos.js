@@ -45,12 +45,13 @@ const CATALOGO = [
     ],
   },
   {
-    id: "jinete",
-    titulo: "Jinete / Amazona",
+    id: "amazona",
+    titulo: "Amazona",
     secciones: [
       { id: "pantalon", titulo: "Pantalón", productos: [] },
       { id: "remera-concurso", titulo: "Remera concurso", productos: [] },
       { id: "remera-entrenamiento", titulo: "Remera entrenamiento", productos: [] },
+      { id: "sacos-concurso", titulo: "Sacos de concurso", productos: [] },
       { id: "accesorios", titulo: "Accesorios", productos: [] },
       { id: "chaleco", titulo: "Chaleco", productos: [] },
       { id: "guantes", titulo: "Guantes", productos: [] },
