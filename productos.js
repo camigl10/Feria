@@ -8,6 +8,8 @@
  *   El nombre del archivo se separa con " - ": nombre, talle y precio
  *   (el precio empieza con "$"):
  *        Pantalón - Talle 38 - $40.000.jpg
+ *   Más fotos del mismo producto: mismo nombre con (2), (3)...
+ *        Pantalón (2).jpg   Pantalón (3).jpg
  *
  *  FORMA AVANZADA (opcional): agregar una línea en la sección, por ej.
  *        { nombre: "Mandil azul", precio: "$25.000", detalle: "Talle full", foto: "mandil-azul.jpg" },

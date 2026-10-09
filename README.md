@@ -20,6 +20,16 @@ El nombre del archivo se separa con ` - ` (guion con un espacio de cada lado): p
 - `Guantes - Talles S M L.jpg` → **Guantes**, Talles S M L
 - `IMG_1234.jpg` → solo la foto, sin nombre
 
+### Varias fotos del mismo producto
+
+Subí la primera con todos los datos y las demás con el mismo nombre y `(2)`, `(3)`, etc.:
+
+- `Pantalón - Talle 38 - $40.000.jpg`
+- `Pantalón (2).jpg`
+- `Pantalón (3).jpg`
+
+Se muestran en una sola tarjeta ("3 fotos") y al tocarla se pasan con las flechas o deslizando el dedo.
+
 Formatos: JPG, PNG o WEBP.
 
 (Opcional) En `productos.js` también se pueden cargar productos a mano con un `detalle` extra.

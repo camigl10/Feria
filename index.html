@@ -137,10 +137,22 @@
       all: unset;
       cursor: zoom-in;
       display: block;
+      position: relative;
       aspect-ratio: 1;
       background: var(--chip);
     }
     .card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card .mas-fotos {
+      position: absolute;
+      right: 8px;
+      bottom: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, .6);
+      color: #fff;
+      font-size: .78rem;
+      font-weight: 600;
+    }
     .card .info { padding: 10px 12px 12px; }
     .card .nombre { font-weight: 600; margin: 0; }
     .card .detalle { color: var(--muted); font-size: .88rem; margin: 2px 0 0; }
@@ -181,8 +193,24 @@
       max-width: min(92vw, 900px);
     }
     dialog::backdrop { background: rgba(0, 0, 0, .85); }
-    dialog img { max-width: 100%; max-height: 80vh; display: block; border-radius: 8px; }
+    dialog img { max-width: 100%; max-height: 80vh; display: block; margin: 0 auto; border-radius: 8px; }
     dialog p { color: #fff; text-align: center; margin: 10px 0 0; }
+    dialog .flecha {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, .85);
+      color: #000;
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+    dialog .flecha.ant { left: 12px; }
+    dialog .flecha.sig { right: 12px; }
+    dialog .flecha[hidden] { display: none; }
   </style>
 </head>
 <body>
@@ -201,6 +229,8 @@
   <dialog id="visor">
     <img alt="">
     <p></p>
+    <button class="flecha ant" aria-label="Foto anterior">‹</button>
+    <button class="flecha sig" aria-label="Foto siguiente">›</button>
   </dialog>
 
   <script src="productos.js"></script>
@@ -228,22 +258,32 @@
       mainEl.appendChild(div);
     });
 
+    // Un producto puede tener una foto ("foto") o varias ("fotos")
+    const fotosDe = (p) => p.fotos || (p.foto ? [p.foto] : []);
+    let galerias = [];
+
     function armar() {
+      galerias = [];
       CATALOGO.forEach((cat) => {
         mainEl.querySelector(`.categoria[data-cat="${cat.id}"]`).innerHTML = cat.secciones.map((sec) => {
           const carpeta = `fotos/${cat.id}/${sec.id}/`;
           const items = sec.productos.length
-            ? `<div class="grid">${sec.productos.map((p) => `
+            ? `<div class="grid">${sec.productos.map((p) => {
+                const fotos = fotosDe(p).map((f) => carpeta + f);
+                const g = galerias.push({ fotos, nombre: p.nombre }) - 1;
+                return `
                 <article class="card">
-                  ${p.foto ? `<button class="foto" data-src="${esc(carpeta + p.foto)}" data-nombre="${esc(p.nombre)}">
-                    <img src="${esc(carpeta + p.foto)}" alt="${esc(p.nombre)}" loading="lazy">
+                  ${fotos.length ? `<button class="foto" data-g="${g}">
+                    <img src="${esc(fotos[0])}" alt="${esc(p.nombre)}" loading="lazy">
+                    ${fotos.length > 1 ? `<span class="mas-fotos">${fotos.length} fotos</span>` : ""}
                   </button>` : ""}
                   ${p.nombre || p.detalle || p.precio ? `<div class="info">
                     ${p.nombre ? `<p class="nombre">${esc(p.nombre)}</p>` : ""}
                     ${p.detalle ? `<p class="detalle">${esc(p.detalle)}</p>` : ""}
                     ${p.precio ? `<p class="precio">${esc(p.precio)}</p>` : ""}
                   </div>` : ""}
-                </article>`).join("")}</div>`
+                </article>`;
+              }).join("")}</div>`
             : `<div class="vacio">Próximamente</div>`;
           return `<section class="sub" data-sub="${sec.id}">
               <h2>${esc(sec.titulo)} <small>${sec.productos.length || ""}</small></h2>
@@ -258,14 +298,17 @@
     // El nombre del archivo se separa con " - ": primero el nombre, después el precio (lo que
     // empieza con "$") y el talle u otro detalle, en cualquier orden:
     //   "Pantalón - Talle 38 - $40.000.jpg"  ->  Pantalón / Talle 38 / $40.000
+    // Varias fotos del mismo producto: mismo nombre con (2), (3)...:
+    //   "Pantalón - Talle 38 - $40.000.jpg", "Pantalón (2).jpg", "Pantalón (3).jpg"
     // Los nombres automáticos de cámara/celular ("IMG_1234", "WhatsApp Image ...") no se muestran.
+    const numeroDeFoto = (archivo) => +(archivo.match(/\((\d+)\)\.[^.]+$/)?.[1] || 1);
     function productoDesdeArchivo(archivo) {
-      const partes = archivo.replace(/\.[^.]+$/, "").split(" - ").map((x) => x.trim()).filter(Boolean);
+      const partes = archivo.replace(/\.[^.]+$/, "").replace(/\s*\(\d+\)$/, "").split(" - ").map((x) => x.trim()).filter(Boolean);
       let nombre = partes.shift() || "";
       const precio = partes.filter((x) => x.startsWith("$")).join(" ");
       const detalle = partes.filter((x) => !x.startsWith("$")).join(" · ");
       if (/^(img|dsc|dscn|pxl|image|photo|whatsapp image)([\s_-]|\d|$)/i.test(nombre)) nombre = "";
-      return { nombre, precio, detalle, foto: archivo };
+      return { nombre, precio, detalle, fotos: [archivo] };
     }
 
     async function cargarFotos() {
@@ -286,13 +329,27 @@
       let hayNuevas = false;
       CATALOGO.forEach((cat) => cat.secciones.forEach((sec) => {
         const carpeta = `fotos/${cat.id}/${sec.id}/`;
-        const yaCargadas = new Set(sec.productos.map((p) => p.foto));
+        const yaCargadas = new Set(sec.productos.flatMap(fotosDe));
+        const porNombre = new Map();
         rutas
           .filter((ruta) => ruta.startsWith(carpeta) && /\.(jpe?g|png|webp|gif|avif)$/i.test(ruta))
           .map((ruta) => ruta.slice(carpeta.length))
           .filter((archivo) => !archivo.includes("/") && !yaCargadas.has(archivo))
-          .sort((a, b) => a.localeCompare(b, "es", { numeric: true }))
-          .forEach((archivo) => { sec.productos.push(productoDesdeArchivo(archivo)); hayNuevas = true; });
+          .sort((a, b) => numeroDeFoto(a) - numeroDeFoto(b) || a.localeCompare(b, "es", { numeric: true }))
+          .forEach((archivo) => {
+            const nuevo = productoDesdeArchivo(archivo);
+            const clave = nuevo.nombre.toLowerCase();
+            const existente = clave && porNombre.get(clave);
+            if (existente) {
+              existente.fotos.push(archivo);
+              existente.precio ||= nuevo.precio;
+              existente.detalle ||= nuevo.detalle;
+            } else {
+              if (clave) porNombre.set(clave, nuevo);
+              sec.productos.push(nuevo);
+            }
+            hayNuevas = true;
+          });
       }));
       if (hayNuevas) {
         const y = window.scrollY;
@@ -351,16 +408,44 @@
     desdeHash();
     cargarFotos();
 
-    // ----- Visor de fotos -----
+    // ----- Visor de fotos (con flechas si el producto tiene varias) -----
+    const visorImg = visor.querySelector("img");
+    const [btnAnt, btnSig] = visor.querySelectorAll(".flecha");
+    let galeria = null, indice = 0;
+
+    function verFoto(i) {
+      indice = (i + galeria.fotos.length) % galeria.fotos.length;
+      visorImg.src = galeria.fotos[indice];
+      visorImg.alt = galeria.nombre;
+      const n = galeria.fotos.length;
+      visor.querySelector("p").textContent =
+        [galeria.nombre, n > 1 ? `${indice + 1} / ${n}` : ""].filter(Boolean).join(" · ");
+      btnAnt.hidden = btnSig.hidden = n < 2;
+    }
+
     mainEl.addEventListener("click", (e) => {
       const b = e.target.closest("button.foto");
       if (!b) return;
-      visor.querySelector("img").src = b.dataset.src;
-      visor.querySelector("img").alt = b.dataset.nombre;
-      visor.querySelector("p").textContent = b.dataset.nombre;
+      galeria = galerias[b.dataset.g];
+      verFoto(0);
       visor.showModal();
     });
+    btnAnt.onclick = (e) => { e.stopPropagation(); verFoto(indice - 1); };
+    btnSig.onclick = (e) => { e.stopPropagation(); verFoto(indice + 1); };
     visor.addEventListener("click", () => visor.close());
+    visor.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") verFoto(indice - 1);
+      if (e.key === "ArrowRight") verFoto(indice + 1);
+    });
+    let toqueX = null;
+    visor.addEventListener("touchstart", (e) => { toqueX = e.touches[0].clientX; }, { passive: true });
+    visor.addEventListener("touchend", (e) => {
+      const dx = e.changedTouches[0].clientX - toqueX;
+      if (Math.abs(dx) > 40 && galeria.fotos.length > 1) {
+        verFoto(indice + (dx < 0 ? 1 : -1));
+        e.preventDefault(); // no cerrar el visor al deslizar
+      }
+    });
   </script>
 </body>
 </html>
