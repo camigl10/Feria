@@ -117,6 +117,7 @@
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      align-items: start;
       gap: 16px;
     }
     @media (max-width: 480px) {
@@ -224,28 +225,81 @@
       const div = document.createElement("div");
       div.className = "categoria";
       div.dataset.cat = cat.id;
-      div.innerHTML = cat.secciones.map((sec) => {
-        const carpeta = `fotos/${cat.id}/${sec.id}/`;
-        const items = sec.productos.length
-          ? `<div class="grid">${sec.productos.map((p) => `
-              <article class="card">
-                ${p.foto ? `<button class="foto" data-src="${esc(carpeta + p.foto)}" data-nombre="${esc(p.nombre)}">
-                  <img src="${esc(carpeta + p.foto)}" alt="${esc(p.nombre)}" loading="lazy">
-                </button>` : ""}
-                <div class="info">
-                  <p class="nombre">${esc(p.nombre)}</p>
-                  ${p.detalle ? `<p class="detalle">${esc(p.detalle)}</p>` : ""}
-                  ${p.precio ? `<p class="precio">${esc(p.precio)}</p>` : ""}
-                </div>
-              </article>`).join("")}</div>`
-          : `<div class="vacio">Próximamente</div>`;
-        return `<section class="sub" data-sub="${sec.id}">
-            <h2>${esc(sec.titulo)} <small>${sec.productos.length || ""}</small></h2>
-            ${items}
-          </section>`;
-      }).join("");
       mainEl.appendChild(div);
     });
+
+    function armar() {
+      CATALOGO.forEach((cat) => {
+        mainEl.querySelector(`.categoria[data-cat="${cat.id}"]`).innerHTML = cat.secciones.map((sec) => {
+          const carpeta = `fotos/${cat.id}/${sec.id}/`;
+          const items = sec.productos.length
+            ? `<div class="grid">${sec.productos.map((p) => `
+                <article class="card">
+                  ${p.foto ? `<button class="foto" data-src="${esc(carpeta + p.foto)}" data-nombre="${esc(p.nombre)}">
+                    <img src="${esc(carpeta + p.foto)}" alt="${esc(p.nombre)}" loading="lazy">
+                  </button>` : ""}
+                  ${p.nombre || p.detalle || p.precio ? `<div class="info">
+                    ${p.nombre ? `<p class="nombre">${esc(p.nombre)}</p>` : ""}
+                    ${p.detalle ? `<p class="detalle">${esc(p.detalle)}</p>` : ""}
+                    ${p.precio ? `<p class="precio">${esc(p.precio)}</p>` : ""}
+                  </div>` : ""}
+                </article>`).join("")}</div>`
+            : `<div class="vacio">Próximamente</div>`;
+          return `<section class="sub" data-sub="${sec.id}">
+              <h2>${esc(sec.titulo)} <small>${sec.productos.length || ""}</small></h2>
+              ${items}
+            </section>`;
+        }).join("");
+      });
+    }
+    armar();
+
+    // ----- Fotos subidas a las carpetas: se agregan solas, sin tocar código -----
+    // El nombre del archivo es el nombre del producto. Si tiene " - ", lo que sigue es el precio:
+    //   "Mandil azul - $25.000.jpg"  ->  Mandil azul / $25.000
+    // Los nombres automáticos de cámara/celular ("IMG_1234", "WhatsApp Image ...") no se muestran.
+    function productoDesdeArchivo(archivo) {
+      const base = archivo.replace(/\.[^.]+$/, "").trim();
+      const i = base.lastIndexOf(" - ");
+      let nombre = i > 0 ? base.slice(0, i).trim() : base;
+      const precio = i > 0 ? base.slice(i + 3).trim() : "";
+      if (/^(img|dsc|dscn|pxl|image|photo|whatsapp image)([\s_-]|\d|$)/i.test(nombre)) nombre = "";
+      return { nombre, precio, foto: archivo };
+    }
+
+    async function cargarFotos() {
+      const { usuario, nombre, rama } = REPOSITORIO;
+      const clave = "catalogo-fotos";
+      let rutas;
+      try {
+        const r = await fetch(`https://api.github.com/repos/${usuario}/${nombre}/git/trees/${rama}?recursive=1`);
+        if (!r.ok) throw new Error(r.status);
+        rutas = (await r.json()).tree.filter((x) => x.type === "blob").map((x) => x.path);
+        try { localStorage.setItem(clave, JSON.stringify(rutas)); } catch {}
+      } catch {
+        // Sin conexión con GitHub (o demasiadas visitas seguidas): usar la última lista guardada
+        try { rutas = JSON.parse(localStorage.getItem(clave)); } catch {}
+      }
+      if (!rutas) return;
+
+      let hayNuevas = false;
+      CATALOGO.forEach((cat) => cat.secciones.forEach((sec) => {
+        const carpeta = `fotos/${cat.id}/${sec.id}/`;
+        const yaCargadas = new Set(sec.productos.map((p) => p.foto));
+        rutas
+          .filter((ruta) => ruta.startsWith(carpeta) && /\.(jpe?g|png|webp|gif|avif)$/i.test(ruta))
+          .map((ruta) => ruta.slice(carpeta.length))
+          .filter((archivo) => !archivo.includes("/") && !yaCargadas.has(archivo))
+          .sort((a, b) => a.localeCompare(b, "es", { numeric: true }))
+          .forEach((archivo) => { sec.productos.push(productoDesdeArchivo(archivo)); hayNuevas = true; });
+      }));
+      if (hayNuevas) {
+        const y = window.scrollY;
+        armar();
+        desdeHash();
+        window.scrollTo({ top: y });
+      }
+    }
 
     // ----- Mostrar una categoría: todas sus subdivisiones ("Ver todo") o una sola -----
     function mostrar(catId, subId) {
@@ -294,6 +348,7 @@
     }
     window.addEventListener("hashchange", desdeHash);
     desdeHash();
+    cargarFotos();
 
     // ----- Visor de fotos -----
     mainEl.addEventListener("click", (e) => {

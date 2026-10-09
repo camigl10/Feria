@@ -7,18 +7,21 @@ Abrí `index.html` en el navegador para ver el catálogo.
 - **Caballo**: mandiles, bozal, cueros, mantas, embocaduras, protectores
 - **Jinete / Amazona**: pantalón, remera concurso, remera entrenamiento, accesorios, chaleco, guantes, polainas
 
-## Cómo agregar productos
+## Cómo agregar productos (sin tocar código)
 
-1. Subí la foto a su carpeta dentro de `fotos/`, por ejemplo `fotos/caballo/mandiles/mandil-azul.jpg`.
-2. En `productos.js`, agregá una línea dentro de la sección que corresponde:
+1. En GitHub, entrá a la carpeta de la sección, por ejemplo `fotos/caballo/mandiles`.
+2. Tocá **Add file → Upload files**, elegí las fotos y tocá **Commit changes**.
+3. En 1 o 2 minutos aparecen solas en el catálogo.
 
-   ```js
-   { id: "mandiles", titulo: "Mandiles", productos: [
-     { nombre: "Mandil azul", precio: "$25.000", detalle: "Talle full", foto: "mandil-azul.jpg" },
-   ] },
-   ```
+El nombre del archivo es el nombre del producto. Si ponés ` - `, lo que sigue es el precio:
 
-   `precio` y `detalle` son opcionales.
+- `Mandil azul - $25.000.jpg` → **Mandil azul**, $25.000
+- `Mandil azul.jpg` → **Mandil azul**, sin precio
+- `IMG_1234.jpg` → solo la foto, sin nombre
+
+Formatos: JPG, PNG o WEBP.
+
+(Opcional) En `productos.js` también se pueden cargar productos a mano con un `detalle` extra.
 
 ## Navegación
 

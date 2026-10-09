@@ -2,17 +2,26 @@
  * ============================================================
  *  PRODUCTOS DEL CATÁLOGO
  * ============================================================
- *  Para agregar un producto:
- *   1. Subí la foto a la carpeta que corresponda, por ejemplo:
- *        fotos/caballo/mandiles/mandil-azul.jpg
- *   2. Agregá una línea dentro de la sección correspondiente:
- *        { nombre: "Mandil azul", precio: "$25.000", foto: "mandil-azul.jpg" },
+ *  FORMA FÁCIL (sin tocar este archivo):
+ *   Subí la foto a la carpeta que corresponda dentro de "fotos/"
+ *   (por ejemplo fotos/caballo/mandiles/) y aparece sola en el catálogo.
+ *   El nombre del archivo es el nombre del producto; si ponés " - ",
+ *   lo que sigue es el precio:
+ *        Mandil azul - $25.000.jpg
  *
- *  - "foto" es solo el nombre del archivo (la carpeta ya la sabe el catálogo).
- *  - "precio" y "detalle" son opcionales: si no los ponés, no se muestran.
- *  - Si una sección queda vacía, el catálogo muestra "Próximamente".
+ *  FORMA AVANZADA (opcional): agregar una línea en la sección, por ej.
+ *        { nombre: "Mandil azul", precio: "$25.000", detalle: "Talle full", foto: "mandil-azul.jpg" },
+ *   Sirve para sumar un "detalle". Si la foto está acá, no se repite.
  * ============================================================
  */
+
+// Repositorio de GitHub de donde el catálogo lee las fotos.
+// "rama" tiene que ser la misma que está elegida en Settings → Pages.
+const REPOSITORIO = {
+  usuario: "camigl10",
+  nombre: "Feria",
+  rama: "claude/equestrian-catalog-sections-2ttyjt",
+};
 
 const CATALOGO = [
   {
